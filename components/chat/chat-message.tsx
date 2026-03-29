@@ -69,6 +69,11 @@ export const ChatMessage = memo(function ChatMessage({
     return null;
   }
 
+  // Find index of presentExercise tool call (if any) to hide text after it
+  const presentExerciseIndex = message.parts.findIndex(
+    (p) => p.type === "tool-presentExercise"
+  );
+
   return (
     <div
       className="group/message w-full animate-in fade-in duration-200"
@@ -96,6 +101,16 @@ export const ChatMessage = memo(function ChatMessage({
         >
           {message.parts.map((part, index) => {
             const key = `msg-${message.id}-part-${index}`;
+
+            // CRITICAL: Hide text that comes AFTER presentExercise tool call
+            // AI should not output feedback before user answers
+            if (
+              presentExerciseIndex !== -1 &&
+              index > presentExerciseIndex &&
+              part.type === "text"
+            ) {
+              return null;
+            }
 
             // Text parts
             if (part.type === "text" && part.text.trim()) {
