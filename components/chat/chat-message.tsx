@@ -1,6 +1,6 @@
 "use client";
 
-import { memo } from "react";
+import { memo, useMemo } from "react";
 import type { UIMessage } from "@ai-sdk/react";
 import { ChatExercise } from "./chat-exercise";
 import { ChatUnitCard } from "./unit-card";
@@ -8,6 +8,32 @@ import { ArticleCard } from "./article-card";
 import { SearchResultsCard } from "./search-results-card";
 import { ToolCall } from "./tool-call";
 import { HoverableMarkdown } from "@/components/word/hoverable-markdown";
+import { parseExercisesFromMarkdown } from "@/lib/content/parser";
+import type { Exercise } from "@/lib/content/types";
+
+/** Regex to detect raw exercise markdown that model outputted as text instead of tool call */
+const EXERCISE_PATTERN = /\[(multiple-choice|fill-in-blank|matching-pairs|translation|listening|word-bank|speaking|free-text|flashcard-review)\]/;
+
+/** Try to extract exercise blocks from text; returns { exercises, cleanText } */
+function extractInlineExercises(text: string): { exercises: Exercise[]; cleanText: string } {
+  if (!EXERCISE_PATTERN.test(text)) {
+    return { exercises: [], cleanText: text };
+  }
+  try {
+    // Find where exercises start
+    const match = text.match(EXERCISE_PATTERN);
+    if (!match || match.index === undefined) {
+      return { exercises: [], cleanText: text };
+    }
+    const exerciseStart = match.index;
+    const cleanText = text.slice(0, exerciseStart).trim();
+    const exerciseText = text.slice(exerciseStart);
+    const exercises = parseExercisesFromMarkdown(exerciseText);
+    return { exercises, cleanText };
+  } catch {
+    return { exercises: [], cleanText: text };
+  }
+}
 
 interface ChatMessageProps {
   message: UIMessage;
@@ -84,12 +110,28 @@ export const ChatMessage = memo(function ChatMessage({
                 );
               }
 
+              // FALLBACK: If model wrote raw exercise markdown instead of using tool,
+              // extract and render exercises inline
+              const { exercises, cleanText } = extractInlineExercises(part.text);
+              
               return (
-                <div
-                  key={key}
-                  className="prose prose-sm max-w-none text-lingo-text [&_p]:my-1 [&_ul]:my-1.5 [&_ol]:my-1.5 [&_li]:my-0 [&_code]:whitespace-pre-wrap [&_code]:break-words [&_pre]:max-w-full [&_pre]:overflow-x-auto [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
-                >
-                  <HoverableMarkdown text={part.text} language={language} />
+                <div key={key} className="flex flex-col gap-2 md:gap-3">
+                  {cleanText && (
+                    <div className="prose prose-sm max-w-none text-lingo-text [&_p]:my-1 [&_ul]:my-1.5 [&_ol]:my-1.5 [&_li]:my-0 [&_code]:whitespace-pre-wrap [&_code]:break-words [&_pre]:max-w-full [&_pre]:overflow-x-auto [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+                      <HoverableMarkdown text={cleanText} language={language} isStreaming={isLoading} />
+                    </div>
+                  )}
+                  {exercises.map((exercise, exIndex) => (
+                    <ChatExercise
+                      key={`${key}-ex-${exIndex}`}
+                      exercise={exercise}
+                      toolCallId={`inline-${message.id}-${index}-${exIndex}`}
+                      language={language}
+                      completed={completedExercises[`inline-${message.id}-${index}-${exIndex}`]}
+                      onComplete={onExerciseComplete}
+                      autoplayAudio={autoplayAudio}
+                    />
+                  ))}
                 </div>
               );
             }

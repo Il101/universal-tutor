@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, Children, isValidElement, ReactNode } from "react";
+import { useState, useCallback, Children, isValidElement, ReactNode, memo, useMemo } from "react";
 import ReactMarkdown from "react-markdown";
 import { WordPopover } from "./word-popover";
 import { useAudio } from "@/hooks/use-audio";
@@ -13,9 +13,20 @@ interface ActiveWord {
 interface HoverableMarkdownProps {
   text: string;
   language: string;
+  /** When true (during streaming), skip word-by-word processing for performance */
+  isStreaming?: boolean;
 }
 
-export function HoverableMarkdown({ text, language }: HoverableMarkdownProps) {
+/** Simple markdown component without hover functionality - used during streaming */
+const SimpleMarkdown = memo(function SimpleMarkdown({ text }: { text: string }) {
+  return <ReactMarkdown>{text}</ReactMarkdown>;
+});
+
+export const HoverableMarkdown = memo(function HoverableMarkdown({ 
+  text, 
+  language,
+  isStreaming = false,
+}: HoverableMarkdownProps) {
   const [active, setActive] = useState<ActiveWord | null>(null);
   const { play } = useAudio();
 
@@ -28,6 +39,11 @@ export function HoverableMarkdown({ text, language }: HoverableMarkdownProps) {
     },
     [play, language]
   );
+
+  // During streaming, render simple markdown without hover functionality
+  if (isStreaming) {
+    return <SimpleMarkdown text={text} />;
+  }
 
   function renderWords(str: string, keyPrefix: string) {
     const words = str.split(/(\s+)/);
@@ -100,4 +116,4 @@ export function HoverableMarkdown({ text, language }: HoverableMarkdownProps) {
       )}
     </>
   );
-}
+});

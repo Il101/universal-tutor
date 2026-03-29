@@ -29,8 +29,23 @@ export const AVAILABLE_MODELS: {
   provider: string;
 }[] = [
   {
+    id: "qwen/qwen3-next-80b-a3b-instruct",
+    label: "NVIDIA Qwen3 Next 80B",
+    provider: "nvidia",
+  },
+  {
+    id: "openai/gpt-oss-120b",
+    label: "NVIDIA GPT-OSS 120B",
+    provider: "nvidia",
+  },
+  {
     id: "meta/llama-3.1-70b-instruct",
     label: "NVIDIA Llama 3.1 70B",
+    provider: "nvidia",
+  },
+  {
+    id: "z-ai/glm5",
+    label: "NVIDIA GLM5",
     provider: "nvidia",
   },
   {
