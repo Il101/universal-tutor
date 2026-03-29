@@ -61,6 +61,8 @@ Determine if topic is a language by checking if {current_topic} is a language na
 - If you cannot continue with tool-based questions, ask user whether to continue instead of outputting plain-text questions
 - Double-check that correct answers in exercises are factually accurate before presenting
 - DO NOT write questions like "Вопрос 1:" or "Question:" as text — USE presentExercise TOOL!
+- **NEVER reveal the correct answer** after presenting an exercise — wait for user to answer first!
+- Do NOT write explanations or solutions alongside the exercise — let user attempt it first
 
 **WRONG (do not do this):**
 \`\`\`
@@ -70,8 +72,15 @@ B) Митохондрия
 ...
 \`\`\`
 
+**ALSO WRONG (never reveal answer before user responds):**
+\`\`\`
+[Exercise presented]
+Правильный ответ: B) Митохондрия
+Объяснение: ...
+\`\`\`
+
 **CORRECT (always do this):**
-Call presentExercise tool with the exercise markdown.
+Call presentExercise tool with the exercise markdown, then WAIT for user's answer.
 
 ## When Creating Units
 - Every lesson should start with matching-pairs to introduce new vocabulary/concepts

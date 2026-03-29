@@ -111,14 +111,19 @@ export const ChatMessage = memo(function ChatMessage({
               }
 
               // FALLBACK: If model wrote raw exercise markdown instead of using tool,
-              // extract and render exercises inline
-              const { exercises, cleanText } = extractInlineExercises(part.text);
+              // extract and render exercises inline (only when streaming is done)
+              const { exercises, cleanText } = isLoading 
+                ? { exercises: [], cleanText: part.text }
+                : extractInlineExercises(part.text);
+              
+              // If exercises found, only show clean text (hide raw markdown)
+              const displayText = exercises.length > 0 ? cleanText : part.text;
               
               return (
                 <div key={key} className="flex flex-col gap-2 md:gap-3">
-                  {cleanText && (
+                  {displayText && (
                     <div className="prose prose-sm max-w-none text-lingo-text [&_p]:my-1 [&_ul]:my-1.5 [&_ol]:my-1.5 [&_li]:my-0 [&_code]:whitespace-pre-wrap [&_code]:break-words [&_pre]:max-w-full [&_pre]:overflow-x-auto [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
-                      <HoverableMarkdown text={cleanText} language={language} isStreaming={isLoading} />
+                      <HoverableMarkdown text={displayText} language={language} isStreaming={isLoading} />
                     </div>
                   )}
                   {exercises.map((exercise, exIndex) => (
