@@ -1,0 +1,78 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import type { FillInTheBlankExercise } from "@/lib/content/types";
+import { useExercise } from "@/hooks/use-exercise";
+import { useAudio } from "@/hooks/use-audio";
+import { checkSimilarity } from "@/lib/similarity";
+import { ExerciseShell } from "./exercise-shell";
+import { HoverableText } from "@/components/word/hoverable-text";
+import { AudioSpinner } from "@/components/audio-spinner";
+import { ReplayButton } from "@/components/replay-button";
+
+interface Props {
+  exercise: FillInTheBlankExercise;
+  onResult: (correct: boolean, answer: string) => void;
+  onContinue: () => void;
+  language: string;
+  autoplayAudio?: boolean;
+}
+
+export function FillInTheBlank({ exercise, onResult, onContinue, language, autoplayAudio = true }: Props) {
+  const [input, setInput] = useState("");
+  const [correctedMarkdown, setCorrectedMarkdown] = useState<string>();
+  const { status, checkAnswer } = useExercise();
+  const { play, stop, loading: audioLoading } = useAudio();
+
+  useEffect(() => {
+    if (autoplayAudio && !exercise.noAudio?.includes("sentence"))
+      play(exercise.sentence.replace("___", exercise.blank), language);
+    return stop;
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  function handleCheck() {
+    const result = checkSimilarity(input.trim(), exercise.blank);
+    if (!result.isCorrect) setCorrectedMarkdown(result.correctedMarkdown);
+    checkAnswer(result.isCorrect);
+    onResult(result.isCorrect, input.trim());
+  }
+
+  const parts = exercise.sentence.split("___");
+
+  return (
+    <ExerciseShell
+      status={status}
+      onCheck={handleCheck}
+      onContinue={onContinue}
+      canCheck={input.trim().length > 0}
+      correctAnswer={exercise.blank}
+      correctedMarkdown={correctedMarkdown}
+      language={language}
+    >
+      <div className="flex items-start gap-2 mb-6">
+        <h2 className="text-xl font-bold text-lingo-text">
+          Fill in the blank
+        </h2>
+        {!exercise.noAudio?.includes("sentence") && (
+          <ReplayButton onPlay={() => play(exercise.sentence.replace("___", exercise.blank), language)} />
+        )}
+      </div>
+      <AudioSpinner loading={audioLoading} />
+      <div className="flex flex-wrap items-center gap-2 text-2xl font-bold text-lingo-text mb-6">
+        <HoverableText text={parts[0]} language={language} noAudio={exercise.noAudio?.includes("sentence")} />
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && input.trim() && status === "answering") handleCheck();
+          }}
+          disabled={status !== "answering"}
+          className="w-40 border-b-4 border-lingo-blue bg-transparent text-center focus:outline-none"
+          autoFocus
+        />
+        <HoverableText text={parts[1]} language={language} noAudio={exercise.noAudio?.includes("sentence")} />
+      </div>
+    </ExerciseShell>
+  );
+}

@@ -1,0 +1,6 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "supabase": true,
+        "npx vercel": true
+    }
+}
