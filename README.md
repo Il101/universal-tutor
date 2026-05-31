@@ -5,6 +5,8 @@
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-316192?logo=postgresql)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
+🔗 **[Live demo](https://openlingo-tutor.vercel.app)**
+
 AI-powered learning platform for **any subject**, not only languages.
 
 > Inspired by OpenLingo architecture, significantly adapted and extended for universal learning workflows.
